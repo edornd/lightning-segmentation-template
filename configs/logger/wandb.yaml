@@ -1,0 +1,12 @@
+# https://wandb.ai (Weights&Biases)
+
+wandb:
+    _target_: src.loggers.wandb.SilentWandbLogger
+    project: ${project_name}
+    entity: ${env:WANDB_ENTITY}
+    # offline: False  # set True to store all logs only locally
+    job_type: train
+    name: ${now:%Y/%m/%d %H:%M}
+    group: ""
+    notes: ${hydra:job.override_dirname}
+    save_dir: .

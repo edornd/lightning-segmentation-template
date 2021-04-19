@@ -1,0 +1,5 @@
+# train with many plugins at once
+
+defaults:
+    - ddp.yaml
+    # - other.yaml

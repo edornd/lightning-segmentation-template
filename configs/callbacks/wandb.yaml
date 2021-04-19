@@ -1,0 +1,22 @@
+defaults:
+    - default.yaml
+
+wandb_watch_model:
+    _target_: src.callbacks.wandb.WatchModelWithWandb
+    log: "all"
+    log_freq: 100
+
+wandb_upload_code:
+    _target_: src.callbacks.wandb.UploadCodeToWandbAsArtifact
+    code_dir: ${work_dir}
+
+uwandb_pload_ckpts:
+    _target_: src.callbacks.wandb.UploadCheckpointsToWandbAsArtifact
+    ckpt_dir: "checkpoints/"
+    upload_best_only: True
+
+wandb_save_f1_precision_recall_heatmap:
+    _target_: src.callbacks.wandb.LogF1PrecRecHeatmapToWandb
+
+wandb_save_confusion_matrix:
+    _target_: src.callbacks.wandb.LogConfusionMatrixToWandb
