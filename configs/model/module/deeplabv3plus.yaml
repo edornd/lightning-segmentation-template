@@ -1,0 +1,4 @@
+_target_: cvmodels.segmentation.deeplab.DeepLabV3Plus
+in_channels: ${datamodule.image_channels}
+out_channels: ${datamodule.num_classes}
+pretrained: True

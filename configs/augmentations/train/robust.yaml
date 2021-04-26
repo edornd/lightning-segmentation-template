@@ -1,0 +1,23 @@
+flip:
+    _target_: albumentations.Flip
+    p: 0.5
+
+shift_scale_rotate:
+    _target_: albumentations.ShiftScaleRotate
+    shift_limit: 0.2 # + or -
+    scale_limit: [-0.2, 0.5]
+    rotate_limit: 90 # + or -
+    border_mode: 4 # reflect 101
+    interpolation: 1 #bilinear
+    value: 0
+    mask_value: ${datamodule.ignore_index}
+    p: 0.5
+
+normalize:
+    _target_: albumentations.Normalize
+    mean: ${datamodule.mean}
+    std: ${datamodule.std}
+    max_pixel_value: ${datamodule.max_pixel}
+
+to_tensor:
+    _target_: albumentations.pytorch.ToTensorV2

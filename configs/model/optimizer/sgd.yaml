@@ -1,0 +1,7 @@
+# no _target_ since we need to manually instantiate optimizers
+# since they also require the parameters from the model
+target: torch.optim.SGD
+params:
+    lr: ${model.lr}
+    weight_decay: ${model.weight_decay}
+    momentum: 0.9

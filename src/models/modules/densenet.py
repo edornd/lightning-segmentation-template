@@ -1,5 +1,4 @@
-from torch import nn
-
+import torch.nn as nn
 
 class SimpleDenseNet(nn.Module):
     def __init__(self, hparams: dict):

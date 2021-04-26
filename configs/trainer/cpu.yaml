@@ -1,0 +1,25 @@
+# Trainer args for even harder debugging
+
+_target_: pytorch_lightning.Trainer
+gpus: null
+accelerator: null
+
+min_epochs: 1
+max_epochs: 3
+
+# prints
+progress_bar_refresh_rate: null
+weights_summary: null
+profiler: null
+
+# debug
+num_sanity_val_steps: 2
+fast_dev_run: False
+overfit_batches: 0
+limit_train_batches: 1.0
+limit_val_batches: 1.0
+limit_test_batches: 1.0
+track_grad_norm: -1
+terminate_on_nan: False
+
+resume_from_checkpoint: "/home/arnaudo/tests/lightning-segmentation-template/logs/runs/2021-04-21_12-22-19/datamodule=potsdam_rgb,model.lr=1e-2,seed=1337/checkpoints/epoch-44_step-4049.ckpt"

@@ -1,0 +1,12 @@
+_target_: pytorch_lightning.Trainer
+
+gpus: [5]
+auto_select_gpus: False
+accelerator: null
+
+min_epochs: 1
+max_epochs: 80
+
+# tricks
+stochastic_weight_avg: False
+# resume_from_checkpoint: null

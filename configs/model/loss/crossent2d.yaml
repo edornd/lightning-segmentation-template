@@ -1,0 +1,2 @@
+_target_: src.losses.crossent.CrossEntropy2D
+ignore_index: ${datamodule.ignore_index}

@@ -1,0 +1,31 @@
+_target_: src.datamodules.isprs.VaihingenDataModule
+dataset_dir: ${data_dir}/vaihingen
+dataset_class: src.datamodules.datasets.isprs.ISPRSDataset
+
+# dataset statistics
+image_height: 512
+image_width: 512
+image_channels: 4
+max_pixel: 1.0
+mean: [0.473, 0.321, 0.319, 0.363]
+std: [0.216, 0.155, 0.150, 0.196]
+
+# loader configuration
+batch_size: 4
+num_workers: 16
+
+# dataset-specific configuration
+include_dsm: true
+
+# other useful information, used by other configuration groups
+num_classes: 6
+class_names: ["imp_surface", "building", "low_vegetation", "tree", "car", "clutter"]
+ignore_index: 255
+palette:
+    0: [255, 0, 0]
+    1: [255, 255, 255]
+    2: [0, 0, 255]
+    3: [0, 255, 255]
+    4: [0, 255, 0]
+    5: [255, 255, 0]
+    255: [0, 0, 0]

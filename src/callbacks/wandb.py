@@ -1,14 +1,15 @@
 import glob
 import os
-from typing import List
+from typing import Any, List
 
 import matplotlib.pyplot as plt
 import seaborn as sn
 import torch
 import wandb
-from pytorch_lightning import Callback, Trainer
+import numpy as np
+from pytorch_lightning import Callback, Trainer, LightningModule
 from pytorch_lightning.loggers import LoggerCollection, WandbLogger
-from sklearn import metrics
+from pytorch_lightning.utilities.distributed import rank_zero_only
 from sklearn.metrics import f1_score, precision_score, recall_score
 
 
@@ -76,14 +77,16 @@ class UploadCheckpointsToWandbAsArtifact(Callback):
         experiment.use_artifact(ckpts)
 
 
-class LogConfusionMatrixToWandb(Callback):
+class LogConfusionMatrix(Callback):
     """Generate confusion matrix every epoch and send it to wandb.
     Expects validation step to return predictions and targets.
     """
 
-    def __init__(self):
+    def __init__(self, ignore_index: int = 255, class_names: List[str] = None):
         self.preds = []
         self.targets = []
+        self.ignore_index = ignore_index
+        self.class_names = class_names
         self.ready = True
 
     def on_sanity_check_start(self, trainer, pl_module) -> None:
@@ -98,40 +101,114 @@ class LogConfusionMatrixToWandb(Callback):
     ):
         """Gather data from single batch."""
         if self.ready:
-            self.preds.append(outputs["preds"])
-            self.targets.append(outputs["targets"])
+            y_pred = outputs["preds"].detach().cpu().argmax(dim=1)
+            y_true = outputs["target"].detach().cpu()
+            self.preds.append(y_pred)
+            self.targets.append(y_true)
 
     def on_validation_epoch_end(self, trainer, pl_module):
         """Generate confusion matrix."""
         if self.ready:
             logger = get_wandb_logger(trainer)
             experiment = logger.experiment
+            # concatenate batches
+            preds = torch.cat(self.preds, dim=0)
+            targets = torch.cat(self.targets, dim=0)
+            valid_mask = targets != self.ignore_index
 
-            preds = torch.cat(self.preds).cpu().numpy()
-            targets = torch.cat(self.targets).cpu().numpy()
-
-            confusion_matrix = metrics.confusion_matrix(y_true=targets, y_pred=preds)
-
-            # set figure size
-            plt.figure(figsize=(14, 8))
-
-            # set labels size
-            sn.set(font_scale=1.4)
-
-            # set font size
-            sn.heatmap(confusion_matrix, annot=True, annot_kws={"size": 8}, fmt="g")
-
-            # names should be uniqe or else charts from different experiments in wandb will overlap
-            experiment.log({f"confusion_matrix/{experiment.name}": wandb.Image(plt)}, commit=False)
-
-            # according to wandb docs this should also work but it crashes
-            # experiment.log(f{"confusion_matrix/{experiment.name}": plt})
-
-            # reset plot
-            plt.clf()
-
+            preds = preds[valid_mask].flatten().numpy()
+            targets = targets[valid_mask].flatten().numpy()
+            # names should be unique or else charts from different experiments in wandb will overlap
+            cm = wandb.sklearn.plot_confusion_matrix(targets, preds, self.class_names)
+            experiment.log({f"conf_mat/{experiment.name}": cm})
             self.preds.clear()
             self.targets.clear()
+
+
+class LogPredictionMasks(Callback):
+    """Generates true and predicted masks, then uploads a WandB Image including the RGB background.
+    The images are loggedf during training, every N intervals.
+    """
+
+    def __init__(self,
+                 channels_first: bool = True,
+                 ignore_index: int = 255,
+                 class_names: List[str] = None,
+                 logging_batch_interval: int = 20) -> None:
+        self.channels_first = channels_first
+        self.ignore_index = ignore_index
+        self.class_labels = dict((i, v) for i, v in enumerate(class_names))
+        self.class_labels.update({self.ignore_index: "ignored"})
+        self.logging_batch_interval = logging_batch_interval
+        self.ready = True
+
+    def on_sanity_check_start(self, trainer, pl_module):
+        self.ready = False
+
+    def on_sanity_check_end(self, trainer, pl_module):
+        """Start executing this callback only after all validation sanity checks end."""
+        self.ready = True
+
+    def _rgb(self, image: torch.Tensor) -> torch.Tensor:
+        """Generates an RGB image in uint8 format from the given input tensor.
+
+        Args:
+            image (torch.Tensor): tensor containing the (possibly) multi-channel image
+
+        Returns:
+            torch.Tensor: 3-channel RGB image as numpy array in uint8 format
+        """
+        img = image.detach().cpu().numpy()
+        if self.channels_first:
+            img = img.transpose(1, 2, 0)
+        img = (img - img.min()) / (img.max() - img.min())
+        return (img[:, :, :3] * 255).astype(np.uint8)
+
+    def _wb_mask(self, image: np.ndarray, pred_mask: np.ndarray, true_mask: np.ndarray) -> wandb.Image:
+        """Generates a WandB image, containing the background RGB and both predicted and ground truth masks
+        to superimpose in the web UI.
+
+        Args:
+            image (np.ndarray): RGB image to use as background
+            pred_mask (np.ndarray): prediction mask, as uint8 of indices
+            true_mask (np.ndarray): ground truth mask, as uint8 of indices
+
+        Returns:
+            wandb.Image: WandB image object
+        """
+        return wandb.Image(image, masks={"prediction": {"mask_data" : pred_mask, "class_labels": self.class_labels},
+                                         "ground truth": {"mask_data" : true_mask, "class_labels" : self.class_labels}})
+
+    def on_train_batch_end(self,
+                           trainer,
+                           pl_module: LightningModule,
+                           outputs: Any,
+                           batch: Any,
+                           batch_idx: int,
+                           dataloader_idx: int) -> None:
+        """Iterates over the given batch and, if the interval is correct, generates the corresponding predictions
+        to be visualized into WandB.
+        """
+        # show images only every N batches
+        if (trainer.batch_idx + 1) % self.logging_batch_interval != 0:
+            return
+
+        @rank_zero_only
+        def inner() -> None:
+            # pick the last batch and logits
+            images, masks = batch
+            preds = pl_module.last_logits.argmax(dim=1)
+            mask_list = []
+
+            for index in range(preds.shape[0]):
+                image = self._rgb(images[index])
+                mask = masks[index].detach().cpu().numpy().astype(np.uint8)
+                pred = preds[index].detach().cpu().numpy().astype(np.uint8)
+                mask_list.append(self._wb_mask(image, pred, mask))
+            # send to logger
+            logger = get_wandb_logger(trainer)
+            wandb.log({f"predictions/{logger.experiment.name}" : mask_list})
+        inner()
 
 
 class LogF1PrecRecHeatmapToWandb(Callback):

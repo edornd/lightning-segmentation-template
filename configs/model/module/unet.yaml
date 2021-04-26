@@ -1,0 +1,5 @@
+_target_: cvmodels.segmentation.unet.UNet
+input_channels: ${datamodule.image_channels}
+init_features: 64
+outputs: ${datamodule.num_classes}
+bilinear: True

@@ -1,0 +1,12 @@
+flip:
+    _target_: albumentations.Flip
+    p: 0.5
+
+normalize:
+    _target_: albumentations.Normalize
+    mean: ${datamodule.mean}
+    std: ${datamodule.std}
+    max_pixel_value: ${datamodule.max_pixel}
+
+to_tensor:
+    _target_: albumentations.pytorch.ToTensorV2

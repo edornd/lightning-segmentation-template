@@ -1,0 +1,5 @@
+# no _target_ since we need to manually instantiate optimizers
+# since they also require the parameters from the model
+_target_: torch.optim.Adam
+lr: ${model.lr}
+weight_decay: ${model.weight_decay}

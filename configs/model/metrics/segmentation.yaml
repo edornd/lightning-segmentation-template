@@ -1,0 +1,47 @@
+train:
+    miou:
+        _target_: src.metrics.IoU
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+    f1:
+        _target_: src.metrics.F1Score
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+valid:
+    miou:
+        _target_: src.metrics.IoU
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+    f1:
+        _target_: src.metrics.F1Score
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+test:
+    miou:
+        _target_: src.metrics.IoU
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+    accuracy:
+        _target_: src.metrics.Accuracy
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+    precision:
+        _target_: src.metrics.Precision
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+    recall:
+        _target_: src.metrics.Recall
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
+    f1:
+        _target_: src.metrics.F1Score
+        num_classes: ${datamodule.num_classes}
+        ignore_index: ${datamodule.ignore_index}
+        reduction: micro
