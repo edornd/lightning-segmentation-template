@@ -16,6 +16,16 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 
 
+def makedirs(path: str) -> None:
+    """Simple wrapper around makedirs that first checks for existence.
+
+    Args:
+        path (str): path to be created
+    """
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
 def get_logger(name=__name__, level=logging.INFO):
     """Initializes python logger."""
 
@@ -203,16 +213,6 @@ def log_hyperparameters(
     hparams["datamodule"] = config["datamodule"]
     if "callbacks" in config:
         hparams["callbacks"] = config["callbacks"]
-
-    # save sizes of each dataset
-    # (requires calling `datamodule.setup()` first to initialize datasets)
-    # datamodule.setup()
-    # if hasattr(datamodule, "data_train") and datamodule.data_train:
-    #     hparams["datamodule/train_size"] = len(datamodule.data_train)
-    # if hasattr(datamodule, "data_val") and datamodule.data_val:
-    #     hparams["datamodule/val_size"] = len(datamodule.data_val)
-    # if hasattr(datamodule, "data_test") and datamodule.data_test:
-    #     hparams["datamodule/test_size"] = len(datamodule.data_test)
 
     # save number of model parameters
     hparams["model/params_total"] = sum(p.numel() for p in model.parameters())

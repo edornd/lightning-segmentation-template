@@ -75,9 +75,7 @@ def test(config: DictConfig, cwd: Path) -> None:
 
     # Evaluate model on test set
     LOG.info("Starting testing...")
-    out = trainer.test(model=model, ckpt_path=last_checkpoint, datamodule=datamodule)
-    trainer.pred
-    print(len(out))
+    trainer.test(model=model, ckpt_path=last_checkpoint, datamodule=datamodule)
 
     # Make sure everything closed properly
     LOG.info("Finalizing")

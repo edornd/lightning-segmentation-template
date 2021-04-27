@@ -12,7 +12,7 @@ progress_bar_refresh_rate: 5
 
 # tricks
 precision: 16
-accumulate_grad_batches: 1
+accumulate_grad_batches: 2
 stochastic_weight_avg: False
 sync_batchnorm: True
 # resume_from_checkpoint: null
