@@ -1,0 +1,13 @@
+defaults:
+    - module: deeplabv3plus
+    - loss: focal
+    - metrics: segmentation
+    - optimizer: sgd
+    - scheduler: exp
+
+_target_: src.models.segmentation.SemanticSegmentationModule
+_recursive_: false
+lr: 0.001
+weight_decay: 0.0005
+monitored_metric: valid/f1
+monitored_mode: max

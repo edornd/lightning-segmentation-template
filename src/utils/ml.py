@@ -67,7 +67,7 @@ def reduce(tensor: torch.Tensor, reduction: str) -> torch.Tensor:
     Returns:
         torch.Tensor: reduced tensor, or the tensor itself
     """
-    if reduction == 'elementwise_mean':
+    if reduction in ("elementwise_mean", "mean"):
         return torch.mean(tensor)
     if reduction == 'sum':
         return torch.sum(tensor)

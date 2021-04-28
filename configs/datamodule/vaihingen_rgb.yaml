@@ -7,8 +7,8 @@ image_height: 512
 image_width: 512
 image_channels: 3
 max_pixel: 1.0
-mean: [0.485, 0.456, 0.406]
-std: [0.229, 0.224, 0.225]
+mean: [0.485, 0.456, 0.485]
+std: [0.229, 0.224, 0.229]
 
 # loader configuration
 batch_size: 4

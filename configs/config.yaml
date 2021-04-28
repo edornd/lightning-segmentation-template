@@ -3,7 +3,7 @@
 # specify here default training configuration
 defaults:
     - trainer: multi-gpu
-    - model: segmentation
+    - model: v2
     - datamodule: vaihingen_full
     - augmentations: default
     - callbacks: default        # set this to null if you don't want to use callbacks
